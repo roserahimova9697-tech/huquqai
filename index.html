@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HuquqAI — O'zbekiston Qonunchiligiga Asoslangan AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --navy:#0f1f3d;--navy2:#162847;--navy3:#1e3a5f;
+  --gold:#c9a84c;--goldl:#e8c96a;--goldp:#f5e9c8;
+  --cream:#faf7f0;--white:#fff;
+  --tm:#1a1a2e;--ts:#6b7280;--tl:#9ca3af;
+  --brd:rgba(201,168,76,.2);--brdl:rgba(201,168,76,.1);
+  --ok:#059669;--r:12px;--rl:20px;
+  --sh:0 4px 24px rgba(15,31,61,.12);
+  --shg:0 4px 20px rgba(201,168,76,.2);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--tm);min-height:100vh;display:flex;flex-direction:column}
+header{background:var(--navy);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px;border-bottom:1px solid rgba(201,168,76,.3);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--gold),var(--goldl));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.logo-text{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:#fff}
+.logo-text span{color:var(--gold)}
+nav{display:flex;gap:4px}
+.nav-btn{padding:6px 13px;border-radius:8px;color:rgba(255,255,255,.65);font-size:13px;cursor:pointer;border:none;background:transparent;font-family:'DM Sans',sans-serif;transition:.2s}
+.nav-btn:hover,.nav-btn.active{background:rgba(201,168,76,.15);color:var(--goldl)}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.btn-api{padding:7px 14px;border-radius:8px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--goldl);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s}
+.btn-api:hover{background:rgba(201,168,76,.25)}
+.btn-api.connected{background:rgba(5,150,105,.15);border-color:rgba(5,150,105,.4);color:#34d399}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;height:calc(100vh - 60px)}
+
+/* SIDEBAR */
+.sidebar{width:260px;background:#fff;border-right:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0}
+.sb-top{padding:12px 10px 0}
+.new-btn{width:100%;padding:9px;border-radius:10px;background:var(--navy);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:7px;font-family:'DM Sans',sans-serif;transition:.2s}
+.new-btn:hover{background:var(--navy3)}
+.sb-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--tl);padding:14px 12px 6px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer;color:var(--ts);font-size:13px;transition:.15s;margin:1px 6px}
+.sb-item:hover{background:var(--cream);color:var(--tm)}
+.sb-item.active{background:var(--goldp);color:var(--navy);font-weight:500}
+.sb-item .ico{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.sb-item.active .ico{background:rgba(201,168,76,.2)}
+.hist{flex:1;overflow-y:auto;padding:0 6px}
+.hist-item{padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--ts);transition:.15s;margin-bottom:2px}
+.hist-item:hover{background:var(--cream);color:var(--tm)}
+.hist-item .hdate{font-size:10px;color:var(--tl);display:block;margin-bottom:1px}
+.sb-foot{padding:10px 12px;border-top:1px solid var(--brdl)}
+.uz-badge{display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--cream);border-radius:8px;border:1px solid var(--brd);font-size:11px;color:var(--ts)}
+
+/* CHAT MAIN */
+.chat-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* WELCOME */
+.welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;overflow-y:auto}
+.w-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;background:var(--navy);color:var(--goldl);border-radius:20px;font-size:11px;font-weight:500;margin-bottom:20px}
+.w-title{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;color:var(--navy);text-align:center;line-height:1.2;margin-bottom:12px;letter-spacing:-1px}
+.w-title span{color:var(--gold)}
+.w-sub{font-size:15px;color:var(--ts);text-align:center;max-width:500px;line-height:1.7;margin-bottom:30px}
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:700px;margin-bottom:28px}
+.cat-card{background:#fff;border:1px solid var(--brd);border-radius:var(--rl);padding:16px 14px;cursor:pointer;transition:.2s;text-align:left}
+.cat-card:hover{border-color:var(--gold);box-shadow:var(--shg);transform:translateY(-2px)}
+.cat-ico{font-size:22px;margin-bottom:8px;display:block}
+.cat-ttl{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:3px}
+.cat-dsc{font-size:11px;color:var(--ts);line-height:1.5}
+.cat-law{display:inline-flex;align-items:center;gap:3px;margin-top:6px;font-size:10px;color:var(--gold);font-weight:600}
+.ex-pills{display:flex;flex-wrap:wrap;gap:7px;max-width:700px}
+.ex-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--tl);margin-bottom:8px}
+.pill{padding:7px 13px;background:#fff;border:1px solid var(--brd);border-radius:20px;font-size:12px;color:var(--navy);cursor:pointer;transition:.15s}
+.pill:hover{background:var(--goldp);border-color:var(--gold)}
+
+/* MESSAGES */
+.msgs{flex:1;overflow-y:auto;padding:20px;display:none;flex-direction:column;gap:16px}
+.msgs.on{display:flex}
+.mrow{display:flex;gap:10px;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.mrow.user{flex-direction:row-reverse}
+.mav{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px}
+.mav.ai{background:var(--navy);color:var(--gold);font-family:'Playfair Display',serif;font-weight:700;font-size:13px}
+.mav.u{background:var(--goldp);color:var(--navy)}
+.bubble{max-width:660px;padding:13px 16px;border-radius:15px;font-size:13.5px;line-height:1.75}
+.mrow.user .bubble{background:var(--navy);color:#fff;border-bottom-right-radius:4px}
+.mrow.ai .bubble{background:#fff;border:1px solid var(--brd);color:var(--tm);border-bottom-left-radius:4px;box-shadow:var(--sh)}
+.bubble h4{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.law-ref{margin-top:10px;padding:9px 11px;background:var(--goldp);border-left:3px solid var(--gold);border-radius:0 7px 7px 0;font-size:11px;color:var(--navy)}
+.law-ref strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--gold);margin-bottom:3px}
+.law-ref a{color:var(--navy);text-decoration:none;font-weight:500}
+.law-ref a:hover{text-decoration:underline;color:var(--gold)}
+.disclaimer{font-size:10.5px;color:var(--tl);margin-top:8px;padding-top:8px;border-top:1px solid var(--brdl);font-style:italic}
+.msg-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.act-btn{padding:5px 11px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--brd);background:var(--cream);color:var(--navy);transition:.15s;font-family:'DM Sans',sans-serif}
+.act-btn:hover{background:var(--goldp);border-color:var(--gold)}
+.typing{display:flex;gap:4px;padding:14px 16px;background:#fff;border:1px solid var(--brd);border-radius:15px;border-bottom-left-radius:4px;width:fit-content;box-shadow:var(--sh)}
+.dot{width:6px;height:6px;background:var(--gold);border-radius:50%;animation:ty 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes ty{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+
+/* DOC PREVIEW */
+.doc-preview{margin-top:10px;background:var(--cream);border:1px solid var(--brd);border-radius:10px;padding:12px;font-size:12px}
+.doc-preview .dp-title{font-weight:600;color:var(--navy);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.doc-preview .dp-content{color:var(--ts);line-height:1.6;white-space:pre-wrap;font-family:monospace;font-size:11px;max-height:200px;overflow-y:auto;background:#fff;border:1px solid var(--brdl);border-radius:7px;padding:10px}
+.dp-actions{display:flex;gap:6px;margin-top:8px}
+.dp-btn{padding:6px 12px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:.2s}
+.dp-btn.download{background:var(--navy);color:var(--goldl)}
+.dp-btn.download:hover{background:var(--navy3)}
+.dp-btn.copy{background:var(--goldp);color:var(--navy);border:1px solid var(--brd)}
+.dp-btn.copy:hover{background:var(--gold);color:#fff}
+
+/* INPUT */
+.inp-area{padding:14px 20px 18px;background:#fff;border-top:1px solid var(--brdl)}
+.mode-tabs{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.mchip{padding:4px 11px;border-radius:16px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--brd);color:var(--ts);background:transparent;transition:.15s;font-family:'DM Sans',sans-serif}
+.mchip:hover{border-color:var(--gold);color:var(--navy)}
+.mchip.active{background:var(--navy);color:var(--goldl);border-color:var(--navy)}
+.doc-chips{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.dchip{padding:4px 11px;border-radius:16px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--brd);color:var(--ts);background:transparent;transition:.15s;font-family:'DM Sans',sans-serif}
+.dchip:hover{border-color:var(--gold);color:var(--navy);background:var(--goldp)}
+.ibox{display:flex;align-items:flex-end;gap:8px;background:var(--cream);border:1.5px solid var(--brd);border-radius:var(--rl);padding:10px 12px;transition:.2s}
+.ibox:focus-within{border-color:var(--gold);background:#fff}
+.ibox textarea{flex:1;border:none;background:transparent;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--tm);resize:none;outline:none;line-height:1.5;min-height:22px;max-height:140px}
+.ibox textarea::placeholder{color:var(--tl)}
+.ibox-btns{display:flex;align-items:center;gap:6px}
+.lexbtn{padding:6px 10px;border-radius:7px;background:var(--goldp);border:1px solid var(--brd);color:var(--navy);font-size:11px;font-weight:600;cursor:pointer;transition:.15s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.lexbtn:hover{background:var(--gold);color:#fff;border-color:var(--gold)}
+.sendbtn{width:36px;height:36px;border-radius:9px;background:var(--navy);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;flex-shrink:0}
+.sendbtn:hover{background:var(--navy3);transform:scale(1.05)}
+.sendbtn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.sendbtn svg{width:17px;height:17px;fill:none;stroke:var(--gold);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.inp-foot{display:flex;align-items:center;justify-content:space-between;margin-top:7px}
+.inp-foot-l{font-size:11px;color:var(--tl);display:flex;align-items:center;gap:4px}
+.gdot{width:6px;height:6px;background:var(--ok);border-radius:50%}
+.rdot{width:6px;height:6px;background:#ef4444;border-radius:50%}
+.cc{font-size:11px;color:var(--tl)}
+
+/* LEX PANEL */
+.lex-panel{width:300px;background:#fff;border-left:1px solid var(--brd);display:none;flex-direction:column;overflow:hidden}
+.lex-panel.open{display:flex}
+.lx-hdr{padding:14px 16px;border-bottom:1px solid var(--brdl);display:flex;align-items:center;justify-content:space-between}
+.lx-ttl{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:7px}
+.lx-close{width:26px;height:26px;border-radius:6px;border:none;background:var(--cream);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--ts)}
+.lx-close:hover{background:var(--brdl)}
+.lx-srch{padding:10px 12px;border-bottom:1px solid var(--brdl)}
+.lx-srch input{width:100%;padding:7px 11px;border:1px solid var(--brd);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--tm);background:var(--cream);outline:none}
+.lx-srch input:focus{border-color:var(--gold);background:#fff}
+.lx-res{flex:1;overflow-y:auto;padding:10px}
+.lx-item{padding:10px;border-radius:9px;border:1px solid var(--brdl);margin-bottom:7px;cursor:pointer;transition:.15s;background:var(--cream)}
+.lx-item:hover{border-color:var(--gold);background:var(--goldp)}
+.lx-item-ttl{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:3px;line-height:1.4}
+.lx-meta{font-size:10px;color:var(--ts);display:flex;align-items:center;gap:6px}
+.lx-tag{display:inline-block;padding:2px 6px;background:rgba(201,168,76,.15);color:var(--gold);border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase}
+
+/* API MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(15,31,61,.7);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:var(--rl);padding:28px;width:440px;max-width:90vw;box-shadow:0 20px 60px rgba(15,31,61,.3);border:1px solid var(--brd)}
+.modal-ttl{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--ts);margin-bottom:20px;line-height:1.6}
+.modal label{font-size:12px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px}
+.modal input{width:100%;padding:10px 13px;border:1.5px solid var(--brd);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--tm);outline:none;margin-bottom:16px}
+.modal input:focus{border-color:var(--gold)}
+.modal-btns{display:flex;gap:8px}
+.modal-save{flex:1;padding:10px;border-radius:10px;background:var(--navy);color:#fff;border:none;cursor:pointer;font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;transition:.2s}
+.modal-save:hover{background:var(--navy3)}
+.modal-cancel{padding:10px 16px;border-radius:10px;background:var(--cream);color:var(--ts);border:1px solid var(--brd);cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;transition:.2s}
+.modal-cancel:hover{background:var(--goldp)}
+.modal-note{font-size:11px;color:var(--tl);margin-top:12px;line-height:1.6;padding:10px;background:var(--cream);border-radius:8px;border:1px solid var(--brdl)}
+
+/* LOADING */
+.loader{position:fixed;inset:0;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s}
+.ldr-logo{font-family:'Playfair Display',serif;font-size:34px;font-weight:700;color:#fff;margin-bottom:6px}
+.ldr-logo span{color:var(--gold)}
+.ldr-bar{width:180px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:22px;overflow:hidden}
+.ldr-fill{height:100%;background:var(--gold);border-radius:2px;animation:lbar 1.8s ease forwards}
+@keyframes lbar{from{width:0}to{width:100%}}
+.ldr-txt{margin-top:10px;font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.5px}
+.api-status{position:fixed;bottom:18px;right:18px;padding:7px 13px;background:var(--navy);color:var(--goldl);border-radius:20px;font-size:11px;display:none;align-items:center;gap:6px;z-index:50;box-shadow:var(--sh);border:1px solid rgba(201,168,76,.3)}
+.api-status.on{display:flex}
+.spin{width:13px;height:13px;border:2px solid rgba(201,168,76,.3);border-top-color:var(--gold);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--brd);border-radius:10px}
+.file-input{display:none}
+.attach-btn{width:36px;height:36px;border-radius:9px;background:var(--cream);border:1px solid var(--brd);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:.2s;flex-shrink:0}
+.attach-btn:hover{background:var(--goldp);border-color:var(--gold)}
+.attached-files{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:0}
+.file-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--goldp);border:1px solid var(--brd);border-radius:20px;font-size:11px;font-weight:500;color:var(--navy);max-width:200px}
+.file-chip .fc-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
+.file-chip .fc-rm{cursor:pointer;color:var(--ts);font-size:14px;line-height:1;flex-shrink:0}
+.file-chip .fc-rm:hover{color:#c00}
+.img-preview{margin-top:8px;border-radius:10px;overflow:hidden;max-width:300px;border:1px solid var(--brd)}
+.img-preview img{width:100%;display:block;max-height:220px;object-fit:contain;background:var(--cream)}
+.edit-area{width:100%;border:1.5px solid var(--gold);border-radius:10px;padding:8px 11px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--tm);resize:none;outline:none;line-height:1.6;background:#fff;margin-top:6px}
+.edit-btns{display:flex;gap:6px;margin-top:6px}
+.edit-save{padding:5px 14px;border-radius:7px;background:var(--navy);color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif}
+.edit-cancel{padding:5px 14px;border-radius:7px;background:var(--cream);color:var(--ts);border:1px solid var(--brd);cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif}
+.drop-overlay{position:fixed;inset:0;background:rgba(201,168,76,.12);border:3px dashed var(--gold);z-index:300;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+.drop-overlay.active{display:flex}
+.drop-txt{font-size:22px;font-weight:600;color:var(--navy);font-family:'Playfair Display',serif}
+.drop-sub{font-size:13px;color:var(--ts)}
+</style>
+</head>
+<body>
+
+<!-- Loader -->
+<div class="loader" id="loader">
+  <div class="ldr-logo">Huquq<span>AI</span></div>
+  <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:5px">O'zbekiston Qonunchiligiga Asoslangan</div>
+  <div class="ldr-bar"><div class="ldr-fill"></div></div>
+  <div class="ldr-txt">Yuklanmoqda...</div>
+</div>
+
+<!-- API Status -->
+<div class="api-status" id="apiSt"><div class="spin"></div><span>AI javob tayyorlanmoqda...</span></div>
+
+<!-- API Key Modal -->
+<div class="modal-bg" id="apiModal">
+  <div class="modal">
+    <div class="modal-ttl">🔑 AI Kalitini Kiriting</div>
+    <div class="modal-sub">Server manzilini kiriting. API kalitlar serverda xavfsiz saqlanadi.</div>
+    <label>Server manzili</label>
+    <input type="text" id="serverUrlInput" placeholder="http://localhost:3000" value="http://localhost:3000" />
+    <div style="padding:10px;background:var(--cream);border-radius:8px;border:1px solid var(--brdl);font-size:11px;color:var(--ts);margin-bottom:14px;line-height:1.6">
+      🔒 API kalitlar serverda yashirin saqlanadi.<br>
+      🌐 Vercel ga joylashtirganingizda: <b>https://sizning-loyiha.vercel.app</b>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-save" onclick="saveServerUrl()">✓ Ulanish</button>
+      <button class="modal-cancel" onclick="closeModal()">Bekor qilish</button>
+    </div>
+  </div>
+</div>
+
+<!-- Drop Overlay -->
+<div class="drop-overlay" id="dropOverlay">
+  <div style="font-size:48px">📎</div>
+  <div class="drop-txt">Faylni shu yerga tashlang</div>
+  <div class="drop-sub">Rasm (JPG, PNG), PDF, Word, Excel, TXT qabul qilinadi</div>
+</div>
+
+<!-- Hidden file input -->
+<input type="file" id="fileInput" class="file-input" multiple accept="image/*,.pdf,.doc,.docx,.txt,.xls,.xlsx" onchange="handleFiles(this.files)">
+
+<!-- Header -->
+<header>
+  <a class="logo" href="#"><div class="logo-icon">⚖️</div><span class="logo-text">Huquq<span>AI</span></span></a>
+  <nav>
+    <button class="nav-btn active">💬 Maslahat</button>
+    <button class="nav-btn">📚 Qonunlar</button>
+    <button class="nav-btn">📄 Hujjatlar</button>
+  </nav>
+  <div class="hdr-right">
+    <button class="btn-api" id="apiBtn" onclick="openModal()">🔑 API Ulash</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sb-top">
+      <button class="new-btn" onclick="newChat()">✦ Yangi suhbat</button>
+    </div>
+    <div class="sb-label">Huquq sohalari</div>
+    <div class="sb-item active" onclick="setCat(this,'umumiy')"><div class="ico">⚖️</div><div><div style="font-size:12px;font-weight:500;color:var(--navy)">Umumiy huquq</div><div style="font-size:10px;color:var(--tl)">Barcha savollar</div></div></div>
+    <div class="sb-item" onclick="setCat(this,'mehnat')"><div class="ico">👷</div><div><div style="font-size:12px">Mehnat huquqi</div><div style="font-size:10px;color:var(--tl)">Mehnat Kodeksi</div></div></div>
+    <div class="sb-item" onclick="setCat(this,'soliq')"><div class="ico">📊</div><div><div style="font-size:12px">Soliq huquqi</div><div style="font-size:10px;color:var(--tl)">Soliq Kodeksi</div></div></div>
+    <div class="sb-item" onclick="setCat(this,'mulk')"><div class="ico">🏠</div><div><div style="font-size:12px">Mulk huquqi</div><div style="font-size:10px;color:var(--tl)">Fuqarolik Kodeksi</div></div></div>
+    <div class="sb-item" onclick="setCat(this,'tadbirkorlik')"><div class="ico">🏢</div><div><div style="font-size:12px">Tadbirkorlik</div><div style="font-size:10px;color:var(--tl)">YaTT, MChJ, JSC</div></div></div>
+    <div class="sb-item" onclick="setCat(this,'oila')"><div class="ico">👨‍👩‍👧</div><div><div style="font-size:12px">Oila huquqi</div><div style="font-size:10px;color:var(--tl)">Oila Kodeksi</div></div></div>
+    <div class="sb-item" onclick="setCat(this,'jinoyat')"><div class="ico">🔒</div><div><div style="font-size:12px">Jinoyat huquqi</div><div style="font-size:10px;color:var(--tl)">JK va JPK</div></div></div>
+    <div class="sb-label">So'nggi suhbatlar</div>
+    <div class="hist" id="hist"></div>
+    <div class="sb-foot">
+      <div class="uz-badge">
+        <div style="display:flex;gap:2px"><span style="width:7px;height:7px;border-radius:50%;background:#1EB2A6"></span><span style="width:7px;height:7px;border-radius:50%;background:#fff;border:1px solid #ddd"></span><span style="width:7px;height:7px;border-radius:50%;background:#1D9648"></span></div>
+        <span>O'zbekiston Respublikasi qonunlari</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-main">
+
+    <!-- Welcome -->
+    <div class="welcome" id="welcome">
+      <div class="w-badge">⚖️ &nbsp; O'zbekiston Qonunchiligiga Asoslangan AI</div>
+      <h1 class="w-title">Yuridik savolingiz<br>bormi? <span>So'rang.</span></h1>
+      <p class="w-sub">O'zbekiston Respublikasining qonunlari, kodekslari va qonun osti hujjatlar asosida tezkor va aniq yuridik maslahat oling. AI hujjat ham tayyorlab beradi.</p>
+      <div class="cat-grid">
+        <div class="cat-card" onclick="ask('Mehnat shartnomasi qanday tuziladi va qanday shartlar majburiy bo\'lishi kerak?')">
+          <span class="cat-ico">👷</span><div class="cat-ttl">Mehnat huquqi</div>
+          <div class="cat-dsc">Ish shartnomasi, ishdan bo'shatish, ta'til, maosh</div>
+          <div class="cat-law">📋 Mehnat Kodeksi</div>
+        </div>
+        <div class="cat-card" onclick="ask('Yakka tartibdagi tadbirkor ro\'yxatdan o\'tkazish uchun qanday hujjatlar kerak?')">
+          <span class="cat-ico">🏢</span><div class="cat-ttl">Tadbirkorlik</div>
+          <div class="cat-dsc">YaTT, MChJ, litsenziya, ruxsatnoma</div>
+          <div class="cat-law">📋 Tadbirkorlik Qonuni</div>
+        </div>
+        <div class="cat-card" onclick="ask('Kvartirani sotib olishda qanday yuridik xatarlar bo\'lishi mumkin?')">
+          <span class="cat-ico">🏠</span><div class="cat-ttl">Mulk huquqi</div>
+          <div class="cat-dsc">Ko'chmas mulk, er, ijara, sotib olish</div>
+          <div class="cat-law">📋 Fuqarolik Kodeksi</div>
+        </div>
+        <div class="cat-card" onclick="ask('QQS bo\'yicha qanday hisobot topshiriladi va muddatlari qanday?')">
+          <span class="cat-ico">📊</span><div class="cat-ttl">Soliq huquqi</div>
+          <div class="cat-dsc">Soliq turlari, hisobot, imtiyozlar</div>
+          <div class="cat-law">📋 Soliq Kodeksi</div>
+        </div>
+        <div class="cat-card" onclick="ask('Nikoh shartnomasi tuzish mumkinmi va qanday rasmiylashtiriladi?')">
+          <span class="cat-ico">👨‍👩‍👧</span><div class="cat-ttl">Oila huquqi</div>
+          <div class="cat-dsc">Nikoh, ajralish, alimentlar, meros</div>
+          <div class="cat-law">📋 Oila Kodeksi</div>
+        </div>
+        <div class="cat-card" onclick="ask('Iste\'molchi huquqlari: sifatsiz tovar uchun nima qilish mumkin?')">
+          <span class="cat-ico">🛡️</span><div class="cat-ttl">Iste'molchi huquqlari</div>
+          <div class="cat-dsc">Tovar/xizmat sifati, shikoyat, kompensatsiya</div>
+          <div class="cat-law">📋 Iste'molchilar Qonuni</div>
+        </div>
+      </div>
+      <div style="width:100%;max-width:700px">
+        <div class="ex-lbl">Hujjat yaratish uchun misol so'rovlar</div>
+        <div class="ex-pills">
+          <div class="pill" onclick="ask('Mehnat shartnomasi shablonini tuzib ber')">📄 Mehnat shartnomasi</div>
+          <div class="pill" onclick="ask('Ijara shartnomasi shablonini tuzib ber')">📄 Ijara shartnomasi</div>
+          <div class="pill" onclick="ask('Ishonchnomasini tuzib ber')">📄 Ishonchnoma</div>
+          <div class="pill" onclick="ask('Ariza namunasini tuzib ber')">📄 Ariza namunasi</div>
+          <div class="pill" onclick="ask('Qarz shartnomasi shablonini tuzib ber')">📄 Qarz shartnomasi</div>
+          <div class="pill" onclick="ask('Xizmat ko\'rsatish shartnomasi tuzib ber')">📄 Xizmat shartnomasi</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="msgs" id="msgs"></div>
+
+    <!-- Input -->
+    <div class="inp-area">
+      <div class="mode-tabs">
+        <button class="mchip active" data-m="umumiy" onclick="setMode(this,'umumiy')">⚖️ Umumiy</button>
+        <button class="mchip" data-m="mehnat" onclick="setMode(this,'mehnat')">👷 Mehnat</button>
+        <button class="mchip" data-m="soliq" onclick="setMode(this,'soliq')">📊 Soliq</button>
+        <button class="mchip" data-m="mulk" onclick="setMode(this,'mulk')">🏠 Mulk</button>
+        <button class="mchip" data-m="tadbirkorlik" onclick="setMode(this,'tadbirkorlik')">🏢 Biznes</button>
+        <button class="mchip" data-m="oila" onclick="setMode(this,'oila')">👨‍👩‍👧 Oila</button>
+        <button class="mchip" data-m="jinoyat" onclick="setMode(this,'jinoyat')">🔒 Jinoyat</button>
+      </div>
+      <div class="doc-chips">
+        <span style="font-size:11px;color:var(--tl);align-self:center;margin-right:4px">Hujjat:</span>
+        <div class="dchip" onclick="reqDoc('mehnat_shartnoma')">📄 Mehnat shartnomasi</div>
+        <div class="dchip" onclick="reqDoc('ijara_shartnoma')">📄 Ijara shartnomasi</div>
+        <div class="dchip" onclick="reqDoc('ishonchnoma')">📄 Ishonchnoma</div>
+        <div class="dchip" onclick="reqDoc('ariza')">📄 Ariza</div>
+        <div class="dchip" onclick="reqDoc('qarz_shartnoma')">📄 Qarz shartnomasi</div>
+      </div>
+      <div class="attached-files" id="attachedFiles"></div>
+      <div class="ibox">
+        <textarea id="inp" placeholder="Yuridik savolingizni yozing, fayl biriktiring yoki hujjat so'rang... (Enter = yuborish)" rows="1" onkeydown="handleKey(event)" oninput="handleInp(this)"></textarea>
+        <div class="ibox-btns">
+          <button class="attach-btn" onclick="document.getElementById('fileInput').click()" title="Fayl biriktirish">📎</button>
+          <button class="lexbtn" onclick="toggleLex()">📚 lex.uz</button>
+          <button class="sendbtn" id="sbtn" onclick="send()">
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="inp-foot">
+        <div class="inp-foot-l" id="connStatus">
+          <div class="rdot" id="statusDot"></div>
+          <span id="statusTxt">API ulanmagan — 🔑 tugmasini bosing</span>
+        </div>
+        <div class="cc" id="cc">0 / 500</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lex Panel -->
+  <div class="lex-panel" id="lexPanel">
+    <div class="lx-hdr">
+      <div class="lx-ttl">📚 lex.uz bazasi</div>
+      <button class="lx-close" onclick="toggleLex()">✕</button>
+    </div>
+    <div class="lx-srch"><input type="text" id="lexQ" placeholder="Qonun nomi yoki kalit so'z..." oninput="filterLex(this.value)"></div>
+    <div class="lx-res" id="lexRes"></div>
+  </div>
+</div>
+
+<script>
+const LEX_DOCS = [
+  {t:"Mehnat Kodeksi",y:"2022",c:"Kodeks",id:"3918556"},
+  {t:"Soliq Kodeksi",y:"2019",c:"Kodeks",id:"4674902"},
+  {t:"Fuqarolik Kodeksi",y:"1996",c:"Kodeks",id:"111181"},
+  {t:"Oila Kodeksi",y:"1998",c:"Kodeks",id:"99552"},
+  {t:"Jinoyat Kodeksi",y:"1994",c:"Kodeks",id:"111457"},
+  {t:"Jinoyat-protsessual Kodeksi",y:"1994",c:"Kodeks",id:"111463"},
+  {t:"Fuqarolik-protsessual Kodeksi",y:"2018",c:"Kodeks",id:"3523895"},
+  {t:"Ma'muriy javobgarlik Kodeksi",y:"1994",c:"Kodeks",id:"112163"},
+  {t:"YaTT faoliyati to'g'risida Qonun",y:"2012",c:"Qonun",id:"2788381"},
+  {t:"Iste'molchilar huquqlari Qonuni",y:"1996",c:"Qonun",id:"99545"},
+  {t:"Ko'chmas mulk to'g'risida Qonun",y:"2021",c:"Qonun",id:"10547636"},
+  {t:"Tadbirkorlik faoliyati Qonuni",y:"2020",c:"Qonun",id:"3517818"},
+  {t:"Litsenziyalash to'g'risida Qonun",y:"2011",c:"Qonun",id:"1960264"},
+  {t:"Notariat to'g'risida Qonun",y:"1996",c:"Qonun",id:"99534"},
+  {t:"Advokatura to'g'risida Qonun",y:"2008",c:"Qonun",id:"1427252"},
+  {t:"O'zbekiston Respublikasi Konstitutsiyasi",y:"1992",c:"Asosiy Qonun",id:"35869"},
+  {t:"Ijara to'g'risida Qonun",y:"1991",c:"Qonun",id:"65082"},
+  {t:"Davlat ro'yxatidan o'tkazish Qonuni",y:"2014",c:"Qonun",id:"2449400"},
+];
+
+const LAW_REFS = {
+  mehnat:{n:"Mehnat Kodeksi",u:"https://lex.uz/docs/3918556"},
+  soliq:{n:"Soliq Kodeksi",u:"https://lex.uz/docs/4674902"},
+  mulk:{n:"Fuqarolik Kodeksi",u:"https://lex.uz/docs/111181"},
+  tadbirkorlik:{n:"Tadbirkorlik Qonuni",u:"https://lex.uz/docs/3517818"},
+  oila:{n:"Oila Kodeksi",u:"https://lex.uz/docs/99552"},
+  jinoyat:{n:"Jinoyat Kodeksi",u:"https://lex.uz/docs/111457"},
+  umumiy:{n:"O'zbekiston Konstitutsiyasi",u:"https://lex.uz/docs/35869"},
+};
+
+const DOC_PROMPTS = {
+  mehnat_shartnoma: "O'zbekiston Respublikasi Mehnat Kodeksiga muvofiq to'liq rasmiy mehnat shartnomasi shablonini tuzib ber. Ish beruvchi va xodim ma'lumotlari uchun [TO'LDIRISH KERAK] belgilari qo'y. Barcha majburiy bandlar bo'lsin.",
+  ijara_shartnoma: "O'zbekiston Respublikasi Fuqarolik Kodeksiga muvofiq ko'chmas mulk ijara shartnomasi shablonini tuzib ber. Ijaraberuvchi va ijarachi ma'lumotlari uchun [TO'LDIRISH KERAK] belgilari qo'y.",
+  ishonchnoma: "O'zbekiston qonunchiligi asosida notarial ishonchnoma shablonini tuzib ber. Vakil va vakillik beruvchi ma'lumotlari uchun [TO'LDIRISH KERAK] belgilari qo'y.",
+  ariza: "Sudga yoki davlat organiga rasmiy ariza shablonini tuzib ber. O'zbekiston ariza yozish qoidalariga mos bo'lsin. [TO'LDIRISH KERAK] belgilari qo'y.",
+  qarz_shartnoma: "O'zbekiston Respublikasi Fuqarolik Kodeksiga muvofiq qarz berish shartnomasi shablonini tuzib ber. Qarz beruvchi va qarz oluvchi ma'lumotlari uchun [TO'LDIRISH KERAK] belgilari qo'y.",
+};
+
+let mode = "umumiy";
+let msgs = [];
+let serverUrl = localStorage.getItem('huquqai_server') || 'http://localhost:3000';
+let lexOpen = false;
+// Legacy vars (not needed with backend)
+let apiKey = 'backend';
+let provider = 'backend';
+
+const PROVIDER_INFO = {
+  gemini: {
+    label: '🟢 Google Gemini',
+    placeholder: 'AIzaSy...',
+    keyLabel: 'Google Gemini API Kaliti',
+    note: '📋 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--gold);font-weight:600">aistudio.google.com</a> ga kiring → <b>Get API Key</b> → Kalitni nusxalang'
+  },
+  anthropic: {
+    label: '🔵 Anthropic Claude',
+    placeholder: 'sk-ant-api03-...',
+    keyLabel: 'Anthropic Claude API Kaliti',
+    note: '📋 <a href="https://console.anthropic.com" target="_blank" style="color:var(--gold);font-weight:600">console.anthropic.com</a> ga kiring → API Keys → Create Key'
+  },
+  groq: {
+    label: '⚡ Groq',
+    placeholder: 'gsk_...',
+    keyLabel: 'Groq API Kaliti',
+    note: '📋 <a href="https://console.groq.com/keys" target="_blank" style="color:var(--gold);font-weight:600">console.groq.com</a> ga kiring → API Keys → Create API Key'
+  }
+};
+
+function selectProvider(p) {
+  provider = p;
+  const info = PROVIDER_INFO[p];
+  document.getElementById('keyLabel').textContent = info.keyLabel;
+  document.getElementById('apiKeyInput').placeholder = info.placeholder;
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('providerNote').innerHTML = info.note;
+  ['gemini','anthropic','groq'].forEach(id => {
+    const btn = document.getElementById('prov'+id.charAt(0).toUpperCase()+id.slice(1));
+    if (id === p) {
+      btn.style.border = '2px solid var(--gold)';
+      btn.style.background = 'var(--goldp)';
+      btn.style.color = 'var(--navy)';
+    } else {
+      btn.style.border = '1px solid var(--brd)';
+      btn.style.background = 'var(--cream)';
+      btn.style.color = 'var(--ts)';
+    }
+  });
+}
+
+async function checkApiStatus() {
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusTxt');
+  const btn = document.getElementById('apiBtn');
+  try {
+    const res = await fetch(serverUrl + '/api/health');
+    const data = await res.json();
+    if (data.status === 'ok') {
+      dot.className = 'gdot';
+      txt.textContent = '✅ Server ulangan (' + data.provider + ') — O\'zbekiston qonunlari asosida';
+      btn.textContent = '✓ Server Ulangan';
+      btn.classList.add('connected');
+    }
+  } catch {
+    dot.className = 'rdot';
+    txt.textContent = '❌ Server ulanmagan — 🔑 tugmasini bosing';
+    btn.textContent = '🔑 Server Ulash';
+    btn.classList.remove('connected');
+  }
+}
+
+function openModal() {
+  document.getElementById('apiModal').classList.add('open');
+  document.getElementById('serverUrlInput').value = serverUrl;
+  setTimeout(()=>document.getElementById('serverUrlInput').focus(),100);
+}
+function closeModal() { document.getElementById('apiModal').classList.remove('open'); }
+function saveServerUrl() {
+  const v = document.getElementById('serverUrlInput').value.trim().replace(/\/+$/, '');
+  if (!v) { alert('Server manzilini kiriting!'); return; }
+  serverUrl = v;
+  localStorage.setItem('huquqai_server', v);
+  closeModal();
+  checkApiStatus();
+}
+
+function setMode(btn, m) {
+  document.querySelectorAll('.mchip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); mode = m;
+}
+function setCat(el, m) {
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); mode = m;
+  document.querySelectorAll('.mchip').forEach(b=>b.classList.toggle('active', b.dataset.m===m));
+}
+
+function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} }
+function handleInp(ta) {
+  ta.style.height='auto';
+  ta.style.height=Math.min(ta.scrollHeight,140)+'px';
+  document.getElementById('cc').textContent=ta.value.length+' / 500';
+}
+
+function ask(txt) { document.getElementById('inp').value=txt; handleInp(document.getElementById('inp')); send(); }
+function reqDoc(type) { const prompt=DOC_PROMPTS[type]; if(prompt){document.getElementById('inp').value=prompt;handleInp(document.getElementById('inp'));send();} }
+function newChat() { msgs=[]; document.getElementById('msgs').innerHTML=''; document.getElementById('msgs').classList.remove('on'); document.getElementById('welcome').style.display='flex'; }
+
+function addMsg(role, content, docContent=null) {
+  const area = document.getElementById('msgs');
+  document.getElementById('welcome').style.display='none';
+  area.classList.add('on');
+  const row = document.createElement('div');
+  row.className=`mrow ${role}`;
+  const ref = LAW_REFS[mode]||LAW_REFS.umumiy;
+  const docHtml = docContent ? `
+    <div class="doc-preview">
+      <div class="dp-title">📄 Hujjat tayyorlandi</div>
+      <div class="dp-content" id="docContent_${Date.now()}">${docContent.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div class="dp-actions">
+        <button class="dp-btn download" onclick="downloadDoc(this)">⬇️ Yuklab olish (.txt)</button>
+        <button class="dp-btn copy" onclick="copyDoc(this)">📋 Nusxa olish</button>
+      </div>
+    </div>` : '';
+  const actionsHtml = `
+    <div class="msg-actions">
+      <button class="act-btn" onclick="copyText(this)">📋 Nusxa</button>
+      <button class="act-btn" onclick="askFollowup('Bu haqida batafsil tushuntir')">🔍 Batafsil</button>
+      <button class="act-btn" onclick="askFollowup('Ushbu mavzu bo\\'yicha hujjat shabloni tuzib ber')">📄 Hujjat tayyorla</button>
+    </div>`;
+  row.innerHTML=`
+    <div class="mav ai">AI</div>
+    <div class="bubble">
+      <h4>⚖️ HuquqAI — ${mode.charAt(0).toUpperCase()+mode.slice(1)} huquqi</h4>
+      <div class="msg-txt">${content.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>')}</div>
+      ${docHtml}
+      <div class="law-ref"><strong>📋 Manba — lex.uz</strong><a href="${ref.u}" target="_blank">${ref.n} →</a></div>
+      <div class="disclaimer">⚠️ Ushbu javob tavsiyaviy xarakter kasb etadi. Muhim masalalar uchun malakali advokatga murojaat qiling.</div>
+      ${actionsHtml}
+    </div>`;
+  area.appendChild(row);
+  area.scrollTop=area.scrollHeight;
+  return row;
+}
+
+function showTyping() {
+  const area=document.getElementById('msgs');
+  document.getElementById('welcome').style.display='none';
+  area.classList.add('on');
+  const row=document.createElement('div');
+  row.className='mrow ai'; row.id='tyrow';
+  row.innerHTML=`<div class="mav ai">AI</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  area.appendChild(row); area.scrollTop=area.scrollHeight;
+}
+function rmTyping() { const t=document.getElementById('tyrow'); if(t)t.remove(); }
+
+function copyText(btn) {
+  const txt = btn.closest('.bubble').querySelector('.msg-txt').innerText;
+  navigator.clipboard.writeText(txt).then(()=>{btn.textContent='✓ Nusxalandi';setTimeout(()=>btn.textContent='📋 Nusxa',2000);});
+}
+
+function askFollowup(txt) { document.getElementById('inp').value=txt; send(); }
+
+function copyDoc(btn) {
+  const content = btn.closest('.doc-preview').querySelector('.dp-content').innerText;
+  navigator.clipboard.writeText(content).then(()=>{btn.textContent='✓ Nusxalandi';setTimeout(()=>btn.textContent='📋 Nusxa olish',2000);});
+}
+
+function downloadDoc(btn) {
+  const content = btn.closest('.doc-preview').querySelector('.dp-content').innerText;
+  const blob = new Blob(['\ufeff'+content], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='HuquqAI_Hujjat.txt'; a.click();
+  URL.revokeObjectURL(url);
+  btn.textContent='✓ Yuklandi!';
+  setTimeout(()=>btn.textContent='⬇️ Word yuklab olish',2000);
+}
+
+// ── FILE HANDLING ──────────────────────────────────────────────────────────
+let attachedFiles = []; // {name, type, data, text, isImage}
+
+function getFileIcon(type, name) {
+  if (type.startsWith('image/')) return '🖼️';
+  if (type === 'application/pdf' || name.endsWith('.pdf')) return '📕';
+  if (name.endsWith('.doc') || name.endsWith('.docx')) return '📘';
+  if (name.endsWith('.xls') || name.endsWith('.xlsx')) return '📗';
+  return '📄';
+}
+
+function renderAttachedFiles() {
+  const container = document.getElementById('attachedFiles');
+  if (attachedFiles.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = attachedFiles.map((f, i) => `
+    <div class="file-chip">
+      <span>${getFileIcon(f.type, f.name)}</span>
+      <span class="fc-name" title="${f.name}">${f.name}</span>
+      <span class="fc-rm" onclick="removeFile(${i})">✕</span>
+    </div>`).join('');
+}
+
+function removeFile(i) {
+  attachedFiles.splice(i, 1);
+  renderAttachedFiles();
+}
+
+async function handleFiles(files) {
+  for (const file of files) {
+    if (file.size > 10 * 1024 * 1024) { alert(`${file.name} juda katta (max 10MB)`); continue; }
+    const isImage = file.type.startsWith('image/');
+    const obj = { name: file.name, type: file.type, isImage, text: '', data: '' };
+
+    if (isImage) {
+      // Read as base64
+      obj.data = await readAsBase64(file);
+    } else if (file.type === 'application/pdf') {
+      obj.text = await readAsText(file).catch(()=>'[PDF matnini o\'qib bo\'lmadi]');
+      if (!obj.text || obj.text.length < 10) obj.text = `[PDF fayl: ${file.name}]`;
+    } else {
+      // txt, doc (plain text attempt)
+      obj.text = await readAsText(file).catch(()=>`[${file.name} faylidan matn o'qib bo'lmadi]`);
+    }
+    attachedFiles.push(obj);
+  }
+  renderAttachedFiles();
+  document.getElementById('fileInput').value = '';
+}
+
+function readAsBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function readAsText(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsText(file, 'UTF-8');
+  });
+}
+
+// Drag & Drop
+document.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('dropOverlay').classList.add('active'); });
+document.addEventListener('dragleave', e => { if (!e.relatedTarget) document.getElementById('dropOverlay').classList.remove('active'); });
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  document.getElementById('dropOverlay').classList.remove('active');
+  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+});
+
+// ── MESSAGE EDITING ─────────────────────────────────────────────────────────
+function editUserMsg(btn, msgIndex) {
+  const bubble = btn.closest('.bubble');
+  const txtEl = bubble.querySelector('.msg-txt');
+  const original = txtEl.innerText;
+  txtEl.style.display = 'none';
+  btn.style.display = 'none';
+
+  const editArea = document.createElement('textarea');
+  editArea.className = 'edit-area';
+  editArea.value = original;
+  editArea.rows = Math.min(original.split('\n').length + 1, 8);
+
+  const btns = document.createElement('div');
+  btns.className = 'edit-btns';
+  btns.innerHTML = `
+    <button class="edit-save" onclick="saveEdit(this, ${msgIndex})">✓ Saqlash va qayta yuborish</button>
+    <button class="edit-cancel" onclick="cancelEdit(this)">Bekor qilish</button>`;
+
+  bubble.appendChild(editArea);
+  bubble.appendChild(btns);
+  editArea.focus();
+  editArea.select();
+}
+
+function cancelEdit(btn) {
+  const bubble = btn.closest('.bubble');
+  bubble.querySelector('.msg-txt').style.display = '';
+  bubble.querySelector('.edit-user-btn').style.display = '';
+  bubble.querySelector('.edit-area').remove();
+  btn.closest('.edit-btns').remove();
+}
+
+function saveEdit(btn, msgIndex) {
+  const bubble = btn.closest('.bubble');
+  const newText = bubble.querySelector('.edit-area').value.trim();
+  if (!newText) return;
+  bubble.querySelector('.msg-txt').textContent = newText;
+  bubble.querySelector('.msg-txt').style.display = '';
+  bubble.querySelector('.edit-user-btn').style.display = '';
+  bubble.querySelector('.edit-area').remove();
+  btn.closest('.edit-btns').remove();
+
+  // Update msgs array and resend from this point
+  msgs = msgs.slice(0, msgIndex);
+  msgs.push({ role: 'user', content: newText });
+
+  // Remove all messages after this index in UI
+  const allRows = document.querySelectorAll('#msgs .mrow');
+  for (let i = msgIndex; i < allRows.length; i++) allRows[i].remove();
+
+  // Resend
+  document.getElementById('sbtn').disabled = true;
+  document.getElementById('apiSt').classList.add('on');
+  showTyping();
+  callAPI(newText, false);
+}
+
+async function send() {
+  if (!apiKey) { openModal(); return; }
+  const inp = document.getElementById('inp');
+  const txt = inp.value.trim();
+  if (!txt && attachedFiles.length === 0) return;
+
+  const displayTxt = txt || '📎 Fayl yuborildi';
+  const msgIndex = msgs.length;
+
+  // Show user message with file previews
+  addUserMsg(displayTxt, [...attachedFiles]);
+
+  inp.value = ''; inp.style.height = 'auto';
+  document.getElementById('cc').textContent = '0 / 500';
+  document.getElementById('sbtn').disabled = true;
+  document.getElementById('apiSt').classList.add('on');
+  showTyping();
+
+  // Build content for API
+  await callAPI(txt, true, msgIndex);
+}
+
+async function callAPI(txt, includeFiles, msgIndex) {
+  const isDocRequest = txt && (
+    txt.toLowerCase().includes('shablon') ||
+    txt.toLowerCase().includes('tuzib ber') ||
+    txt.toLowerCase().includes('yozib ber') ||
+    txt.toLowerCase().includes('hujjat') ||
+    txt.toLowerCase().includes('shartnoma') ||
+    txt.toLowerCase().includes('ariza') ||
+    txt.toLowerCase().includes('ishonchnoma') ||
+    txt.toLowerCase().includes('taxrir') ||
+    txt.toLowerCase().includes("o'zgartir")
+  );
+
+  try {
+    let reply = '';
+
+    if (includeFiles && attachedFiles.length > 0) {
+      // Fayl bilan yuborish
+      const formData = new FormData();
+      formData.append('message', txt || '');
+      formData.append('mode', mode);
+      formData.append('messagesJson', JSON.stringify(msgs.slice(0,-1)));
+
+      for (const f of attachedFiles) {
+        if (f.isImage) {
+          const res2 = await fetch(f.data);
+          const blob = await res2.blob();
+          formData.append('files', blob, f.name);
+        } else if (f.text) {
+          const blob = new Blob([f.text], {type:'text/plain'});
+          formData.append('files', blob, f.name);
+        }
+      }
+      attachedFiles = [];
+      renderAttachedFiles();
+
+      const res = await fetch(serverUrl + '/api/chat-with-file', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      reply = data.reply;
+      msgs.push({role:'assistant', content:reply});
+
+    } else {
+      // Oddiy savol — backend ga yuborish
+      const res = await fetch(serverUrl + '/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ messages: msgs, mode })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      reply = data.reply;
+      msgs.push({role:'assistant', content:reply});
+    }
+
+    rmTyping();
+    document.getElementById('apiSt').classList.remove('on');
+    document.getElementById('sbtn').disabled = false;
+
+    addMsg('ai', reply, isDocRequest ? reply : null);
+
+    const hist = document.getElementById('hist');
+    const item = document.createElement('div');
+    item.className = 'hist-item';
+    const label = txt ? txt.substring(0,38)+(txt.length>38?'...':'') : '📎 Fayl tahlili';
+    item.innerHTML = `<span class="hdate">Hozir</span>${label}`;
+    hist.insertBefore(item, hist.firstChild);
+
+  } catch(e) {
+    rmTyping();
+    document.getElementById('apiSt').classList.remove('on');
+    document.getElementById('sbtn').disabled = false;
+    if (e.message.includes('fetch') || e.message.includes('network') || e.message.includes('Failed')) {
+      addMsg('ai', '❌ Serverga ulanib bo\'lmadi. Server ishlamoqdami? 🔑 tugmasini bosib server manzilini tekshiring.');
+    } else {
+      addMsg('ai', '❌ Xatolik: ' + e.message);
+    }
+  }
+}
+
+function addUserMsg(txt, files) {
+  const area = document.getElementById('msgs');
+  document.getElementById('welcome').style.display = 'none';
+  area.classList.add('on');
+  const msgIndex = msgs.length; // index before push
+  const row = document.createElement('div');
+  row.className = 'mrow user';
+
+  let filesHtml = '';
+  files.forEach(f => {
+    if (f.isImage) {
+      filesHtml += `<div class="img-preview"><img src="${f.data}" alt="${f.name}"></div>`;
+    } else {
+      filesHtml += `<div style="margin-top:6px;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:var(--goldp);border:1px solid var(--brd);border-radius:8px;font-size:11px;font-weight:500;color:var(--navy)">${getFileIcon(f.type,f.name)} ${f.name}</div>`;
+    }
+  });
+
+  row.innerHTML = `
+    <div class="bubble">
+      <div class="msg-txt">${txt !== '📎 Fayl yuborildi' ? txt : ''}</div>
+      ${filesHtml}
+      <div style="margin-top:6px">
+        <button class="act-btn edit-user-btn" onclick="editUserMsg(this, ${msgIndex})">✏️ Tahrirlash</button>
+      </div>
+    </div>
+    <div class="mav u">👤</div>`;
+  area.appendChild(row);
+  area.scrollTop = area.scrollHeight;
+}
+
+function toggleLex() {
+  lexOpen=!lexOpen;
+  document.getElementById('lexPanel').classList.toggle('open',lexOpen);
+  if(lexOpen) renderLex(LEX_DOCS);
+}
+
+function renderLex(docs) {
+  const c=document.getElementById('lexRes');
+  c.innerHTML = docs.length===0
+    ? '<div style="text-align:center;padding:20px;color:var(--tl);font-size:12px">Topilmadi</div>'
+    : docs.map(d=>`<div class="lx-item" onclick="window.open('https://lex.uz/docs/${d.id}','_blank')">
+        <div class="lx-item-ttl">${d.t}</div>
+        <div class="lx-meta"><span class="lx-tag">${d.c}</span><span>${d.y}-yil</span></div>
+      </div>`).join('');
+}
+
+function filterLex(q) {
+  if(!q.trim()){renderLex(LEX_DOCS);return;}
+  renderLex(LEX_DOCS.filter(d=>d.t.toLowerCase().includes(q.toLowerCase())||d.c.toLowerCase().includes(q.toLowerCase())));
+}
+
+window.addEventListener('load',()=>{
+  serverUrl = localStorage.getItem('huquqai_server') || 'http://localhost:3000';
+  checkApiStatus();
+  setTimeout(()=>{
+    const l=document.getElementById('loader');
+    l.style.opacity='0';
+    setTimeout(()=>l.style.display='none',500);
+  },1800);
+  renderLex(LEX_DOCS);
+});
+
+document.getElementById('apiModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+</script>
+</body>
+</html>
