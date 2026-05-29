@@ -158,7 +158,7 @@ async function callAI(messages, mode, customSystem, provider, imageFiles = []) {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model      : 'llama-3.3-70b-versatile',
+        model      : 'llama-3.1-70b-versatile',
         max_tokens : 2000,
         temperature: 0.3,
         messages   : [
@@ -250,13 +250,54 @@ async function callAI(messages, mode, customSystem, provider, imageFiles = []) {
 function buildSystemPrompt(mode) {
   const modeNames = {
     umumiy      : 'Umumiy huquq',
-    mehnat      : 'Mehnat huquqi (Mehnat Kodeksi)',
-    soliq       : 'Soliq huquqi (Soliq Kodeksi)',
-    mulk        : 'Mulk va ko\'chmas mulk huquqi (Fuqarolik Kodeksi)',
+    mehnat      : 'Mehnat huquqi',
+    soliq       : 'Soliq huquqi',
+    mulk        : "Mulk va ko'chmas mulk huquqi",
     tadbirkorlik: 'Tadbirkorlik huquqi',
-    oila        : 'Oila va meros huquqi (Oila Kodeksi)',
-    jinoyat     : 'Jinoyat huquqi (JK va JPK)',
+    oila        : 'Oila va meros huquqi',
+    jinoyat     : 'Jinoyat huquqi',
   };
+
+  const soha = modeNames[mode] || modeNames.umumiy;
+
+  return `Siz O'zbekiston Respublikasining malakali yuridik maslahatchisisiz.
+
+ASOSIY QOIDA: Foydalanuvchi QANDAy savol bersa, O'SHA SAVOLGA javob bering!
+- Ustav so'rasa — ustav bering
+- Shartnoma so'rasa — shartnoma bering  
+- QQS so'rasa — QQS haqida gapiring
+- Mehnat huquqi so'rasa — Mehnat Kodeksi asosida javob bering
+- HECH QACHON boshqa mavzuga o'tmang!
+
+JORIY SOHA: ${soha}
+
+JAVOB FORMATI:
+1. Savolga TO'LIQDAN-TO'LIQQA javob bering
+2. Tegishli qonun/kodeks moddasini ko'rsating
+3. Amaliy misollar va tavsiyalar bering
+4. Hujjat so'ralsa — HAQIQIY to'liq shablon bering, [TO'LDIRISH KERAK] belgilari bilan
+
+O'ZBEKISTON QONUNLARI:
+- Mehnat Kodeksi (2022-yil yangi tahriri)
+- Soliq Kodeksi (2020)
+- Fuqarolik Kodeksi (1997)
+- Oila Kodeksi (1998)
+- Jinoyat Kodeksi (1994)
+- Tadbirkorlik faoliyati to'g'risida Qonun
+- Kompaniyalar to'g'risida Qonun (MChJ, AJ, XK)
+
+USTAVLAR HAQIDA:
+Agar ustav so'ralsa, to'liq kompaniya ustavi shablonini bering:
+- Kompaniya nomi va manzili
+- Faoliyat maqsadi
+- Ustav kapitali
+- Boshqaruv organlari
+- Qarorlar qabul qilish tartibi
+- Foyda taqsimoti
+- Tugatish tartibi
+
+O'zbek tilida, aniq, to'liq, professional javob bering.`;
+}
 
   return `Siz O'zbekiston Respublikasining tajribali yuridik maslahatchi AI yordamchisisiz.
 
