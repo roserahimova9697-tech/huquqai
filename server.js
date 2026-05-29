@@ -15,7 +15,8 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 
 // ── Middleware ────────────────────────────────────────────
-app.use(cors());                          // Barcha domenlardan so'rovga ruxsat
+app.use(cors({ origin: "*", methods: ["GET","POST","OPTIONS"], allowedHeaders: ["Content-Type","Authorization"] }));
+app.options("*", cors());
 app.use(express.json({ limit: '20mb' })); // JSON so'rovlar (max 20MB)
 app.use(express.urlencoded({ extended: true }));
 
