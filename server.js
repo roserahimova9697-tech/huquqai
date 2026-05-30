@@ -1,4 +1,3 @@
-
 // HuquqAI Backend Server — lex.uz integratsiya bilan
 const express = require('express');
 const cors = require('cors');
@@ -301,6 +300,8 @@ async function callAI(messages, mode, relevantLaws, lexContext) {
     });
     const data = await res.json();
     if (data.error) throw new Error('Gemini: ' + data.error.message);
+    if (!data.candidates || !data.candidates[0]) throw new Error('Gemini javob bermadi. API kalitni tekshiring.');
+    if (!data.candidates[0].content) throw new Error('Gemini: ' + (data.candidates[0].finishReason || 'Javob bloklanди'));
     return data.candidates[0].content.parts[0].text;
   }
 
